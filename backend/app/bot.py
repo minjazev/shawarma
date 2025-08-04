@@ -3,7 +3,7 @@ import os
 import re
 import telebot
 from telebot import TeleBot
-from telebot.types import Update, WebAppInfo, Message
+from telebot.types import Update, WebAppInfo, Message, BotCommand
 from telebot.util import quick_markup
 
 BOT_TOKEN=os.getenv('BOT_TOKEN')
@@ -80,6 +80,34 @@ def handle_start_command(message):
         text='*Welcome to Laurel Cafe!* 🌿\n\nIt is time to order something delicious 😋 Tap the button below to get started.'
     )
 
+@bot.message_handler(commands=['start'])
+def handle_start_command_new(message):
+    """Handler for /start command with welcome message and start button"""
+    welcome_text = """*Добро пожаловать в Shawarma!* 🥙
+
+Мы предлагаем вкуснейшие шаурмы и другие блюда быстрого питания.
+
+*Наши преимущества:*
+• Свежие ингредиенты
+• Быстрое приготовление
+• Доставка по городу
+• Приятные цены
+
+Нажмите кнопку *Старт* чтобы начать заказ!"""
+    
+    markup = quick_markup({
+        '🚀 Старт': { 
+            'callback_data': 'start_order'
+        },
+    }, row_width=1)
+    
+    bot.send_message(
+        chat_id=message.chat.id,
+        text=welcome_text,
+        parse_mode='markdown',
+        reply_markup=markup
+    )
+
 @bot.message_handler()
 def handle_all_messages(message):
     """Fallback message handler that is invoced if none of above aren't match. This is a good
@@ -96,7 +124,7 @@ def send_actionable_message(chat_id, text):
       Inline button will open our Mini App on click.
     """
     markup = quick_markup({
-        'Explore Menu': { 
+        '🥙 Открыть меню': { 
             'web_app': WebAppInfo(APP_URL)
         },
     }, row_width=1)
@@ -111,6 +139,12 @@ def refresh_webhook():
     """Just a wrapper for remove & set webhook ops"""
     bot.remove_webhook()
     bot.set_webhook(WEBHOOK_URL + WEBHOOK_PATH)
+    
+    # Устанавливаем команды бота
+    bot.set_my_commands([
+        BotCommand("start", "Начать заказ"),
+        BotCommand("menu", "Открыть меню")
+    ])
 
 def process_update(update_json):
     """Pass received Update JSON to the Bot for processing.
@@ -136,6 +170,33 @@ def create_invoice_link(prices) -> str:
         need_name=True,
         need_phone_number=True,
         need_shipping_address=True
+    )
+
+@bot.callback_query_handler(func=lambda call: call.data == 'start_order')
+def handle_start_order_button(call):
+    """Handler for start order button click"""
+    # Отправляем приветственное сообщение с кнопкой веб-приложения
+    send_actionable_message(
+        chat_id=call.message.chat.id,
+        text='*Отлично! Давайте выберем что-нибудь вкусное!* 🍽️\n\nИзучите наше меню и сделайте заказ.'
+    )
+    
+    # Отвечаем на callback query чтобы убрать "загрузку" с кнопки
+    bot.answer_callback_query(call.id)
+
+@bot.message_handler(commands=['menu'])
+def handle_menu_command(message):
+    """Handler for /menu command - sets up menu button"""
+    # Устанавливаем команду меню для бота
+    bot.set_my_commands([
+        BotCommand("start", "Начать заказ"),
+        BotCommand("menu", "Открыть меню")
+    ])
+    
+    # Отправляем сообщение с кнопкой веб-приложения
+    send_actionable_message(
+        chat_id=message.chat.id,
+        text='*Меню Shawarma* 🥙\n\nВыберите блюдо из нашего меню:'
     )
 
 def enable_debug_logging():
