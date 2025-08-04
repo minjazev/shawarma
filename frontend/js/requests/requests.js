@@ -3,7 +3,7 @@
 const baseUrl = 'https://shawarma-backend-gules.vercel.app';
 
 /**
- * Performs GET request.
+ * Performs GET request!.
  * @param {string} endpoint API endpoint path, e.g. '/info'.
  * @param {*} onSuccess Callback on successful request.
  */
