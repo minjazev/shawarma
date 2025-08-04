@@ -1,6 +1,6 @@
 // Set base URL depending on your environment.
 // Don't forget to add it to allowed origins on backend.
-const baseUrl = '';
+const baseUrl = 'https://shawarma-backend-gules.vercel.app';
 
 /**
  * Performs GET request.
